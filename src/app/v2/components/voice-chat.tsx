@@ -117,10 +117,18 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
     try {
       const responseMessage = await submitUserMessage(trimmedMessage)
 
-      setMessages((currentMessages: any) => [
-        ...currentMessages,
-        responseMessage
-      ])
+      // Safety check to ensure responseMessage is valid before adding to messages
+      if (responseMessage && (
+        typeof responseMessage === 'string' ||
+        (typeof responseMessage === 'object' && (responseMessage.type || responseMessage.$$typeof || responseMessage.display))
+      )) {
+        setMessages((currentMessages: any) => [
+          ...currentMessages,
+          responseMessage
+        ])
+      } else {
+        console.warn('Invalid response message received:', responseMessage)
+      }
 
       // Auto-speak AI response if voice is enabled
       if (isVoiceEnabled && responseMessage.display) {
@@ -881,11 +889,22 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
             </div>
           ) : (
             <>
-              {messages.map((message: any, index: number) => (
-                <div key={index} className="animate-fadeIn">
-                  {message.display}
-                </div>
-              ))}
+              {messages.map((message: any, index: number) => {
+                // Safety check to ensure we only render valid React elements
+                const displayContent = message.display || message
+
+                // If it's an object but not a React element, skip rendering
+                if (displayContent && typeof displayContent === 'object' && !displayContent.type && !displayContent.$$typeof) {
+                  console.warn('Skipping invalid message object:', displayContent)
+                  return null
+                }
+
+                return (
+                  <div key={index} className="animate-fadeIn">
+                    {displayContent}
+                  </div>
+                )
+              })}
               <div ref={messagesEndRef} />
             </>
           )}
