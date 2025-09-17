@@ -63,3 +63,5 @@ hive-mind-prompt-*.txt
 
 # local docker env
 .env.docker
+
+pnpm-lock.yaml
