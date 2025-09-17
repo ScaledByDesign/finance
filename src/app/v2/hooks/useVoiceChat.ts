@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 
 export interface VoiceSettings {
   rate: number
@@ -38,6 +38,7 @@ export interface VoiceChatActions {
   updateVoiceSettings: (settings: Partial<VoiceSettings>) => void
   updateSpeechSettings: (settings: Partial<SpeechSettings>) => void
   checkMicrophonePermission: () => Promise<boolean>
+  clearTranscript: () => void
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -274,6 +275,10 @@ export function useVoiceChat() {
     setSpeechSettings(prev => ({ ...prev, ...settings }))
   }, [])
 
+  const clearTranscript = useCallback(() => {
+    setState(prev => ({ ...prev, currentTranscript: '' }))
+  }, [])
+
   const checkMicrophonePermission = useCallback(async (): Promise<boolean> => {
     try {
       if (typeof window !== 'undefined' && navigator.permissions) {
@@ -288,7 +293,7 @@ export function useVoiceChat() {
     }
   }, [])
 
-  const actions: VoiceChatActions = {
+  const actions: VoiceChatActions = useMemo(() => ({
     startListening,
     stopListening,
     speak,
@@ -300,7 +305,19 @@ export function useVoiceChat() {
     updateVoiceSettings,
     updateSpeechSettings,
     checkMicrophonePermission,
-  }
+    clearTranscript,
+  }), [
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+    pauseSpeaking,
+    resumeSpeaking,
+    updateVoiceSettings,
+    updateSpeechSettings,
+    checkMicrophonePermission,
+    clearTranscript,
+  ])
 
   return {
     state,
