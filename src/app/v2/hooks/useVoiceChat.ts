@@ -37,6 +37,7 @@ export interface VoiceChatActions {
   clearMessages: () => void
   updateVoiceSettings: (settings: Partial<VoiceSettings>) => void
   updateSpeechSettings: (settings: Partial<SpeechSettings>) => void
+  checkMicrophonePermission: () => Promise<boolean>
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -78,9 +79,11 @@ export function useVoiceChat() {
     const initializeSpeechAPIs = () => {
       // Check for speech recognition support
       if (typeof window !== 'undefined') {
+        console.log('Initializing speech APIs...')
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-        
+
         if (SpeechRecognition) {
+          console.log('Speech recognition supported, creating instance...')
           recognitionRef.current = new SpeechRecognition()
           const recognition = recognitionRef.current
           if (recognition) {
@@ -88,9 +91,12 @@ export function useVoiceChat() {
             recognition.interimResults = speechSettings.interimResults
             recognition.lang = speechSettings.language
             ;(recognition as any).maxAlternatives = speechSettings.maxAlternatives
-          }
+            console.log('Speech recognition configured:', {
+              continuous: speechSettings.continuous,
+              interimResults: speechSettings.interimResults,
+              language: speechSettings.language
+            })
 
-          if (recognition) {
             recognition.onstart = () => {
               setState(prev => ({ ...prev, isListening: true, error: null }))
             }
@@ -109,13 +115,39 @@ export function useVoiceChat() {
             }
 
             recognition.onerror = (event: any) => {
-              setState(prev => ({ 
-                ...prev, 
-                isListening: false, 
-                error: `Speech recognition error: ${event.error}` 
+              console.error('Speech recognition error:', event.error, event)
+              let errorMessage = `Speech recognition error: ${event.error}`
+
+              // Provide more helpful error messages
+              switch (event.error) {
+                case 'not-allowed':
+                  errorMessage = 'Microphone access denied. Please allow microphone permissions and try again.'
+                  break
+                case 'no-speech':
+                  errorMessage = 'No speech detected. Please try speaking again.'
+                  break
+                case 'audio-capture':
+                  errorMessage = 'No microphone found. Please check your microphone connection.'
+                  break
+                case 'network':
+                  errorMessage = 'Network error occurred. Please check your internet connection.'
+                  break
+                case 'service-not-allowed':
+                  errorMessage = 'Speech recognition service not allowed. Please try again.'
+                  break
+                default:
+                  errorMessage = `Speech recognition error: ${event.error}`
+              }
+
+              setState(prev => ({
+                ...prev,
+                isListening: false,
+                error: errorMessage
               }))
             }
           }
+        } else {
+          console.warn('Speech recognition not supported in this browser')
         }
 
         // Initialize speech synthesis
@@ -123,9 +155,9 @@ export function useVoiceChat() {
           synthRef.current = window.speechSynthesis
         }
 
-        setState(prev => ({ 
-          ...prev, 
-          isSupported: !!(SpeechRecognition && window.speechSynthesis) 
+        setState(prev => ({
+          ...prev,
+          isSupported: !!(SpeechRecognition && window.speechSynthesis)
         }))
       }
     }
@@ -146,10 +178,17 @@ export function useVoiceChat() {
   const startListening = useCallback(() => {
     if (recognitionRef.current && !state.isListening) {
       try {
+        console.log('Attempting to start speech recognition...')
         recognitionRef.current.start()
       } catch (error) {
-        setState(prev => ({ ...prev, error: 'Failed to start listening' }))
+        console.error('Speech recognition start error:', error)
+        setState(prev => ({ ...prev, error: `Failed to start listening: ${error}` }))
       }
+    } else if (!recognitionRef.current) {
+      console.error('Speech recognition not initialized')
+      setState(prev => ({ ...prev, error: 'Speech recognition not supported or not initialized' }))
+    } else if (state.isListening) {
+      console.warn('Already listening')
     }
   }, [state.isListening])
 
@@ -235,6 +274,20 @@ export function useVoiceChat() {
     setSpeechSettings(prev => ({ ...prev, ...settings }))
   }, [])
 
+  const checkMicrophonePermission = useCallback(async (): Promise<boolean> => {
+    try {
+      if (typeof window !== 'undefined' && navigator.permissions) {
+        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+        console.log('Microphone permission status:', permission.state)
+        return permission.state === 'granted'
+      }
+      return false
+    } catch (error) {
+      console.error('Error checking microphone permission:', error)
+      return false
+    }
+  }, [])
+
   const actions: VoiceChatActions = {
     startListening,
     stopListening,
@@ -246,6 +299,7 @@ export function useVoiceChat() {
     clearMessages: () => {}, // Not used in RSC approach
     updateVoiceSettings,
     updateSpeechSettings,
+    checkMicrophonePermission,
   }
 
   return {

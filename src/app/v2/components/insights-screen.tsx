@@ -344,7 +344,7 @@ export function InsightsScreen({ onBack, isDarkMode, onToggleTheme }: InsightsSc
 
           <button
             onClick={onToggleTheme}
-            className={`p-2 border rounded-lg transition-colors ${
+            className={`hidden p-2 border rounded-lg transition-colors ${
               isDarkMode
                 ? 'bg-gray-900/50 border-gray-800 hover:border-blue-500'
                 : 'bg-gray-100 border-gray-300 hover:border-blue-500'

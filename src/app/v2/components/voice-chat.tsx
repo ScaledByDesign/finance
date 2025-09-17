@@ -41,7 +41,15 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
   const [aiState] = useAIState()
 
   // Voice chat functionality
-  const voiceChat = useVoiceChat()
+  const { state: voiceState, actions: voiceActions } = useVoiceChat()
+  const {
+    startListening,
+    stopListening,
+    speak: browserSpeak,
+    stopSpeaking,
+    checkMicrophonePermission,
+    clearTranscript,
+  } = voiceActions
 
   // Test loan modal state
   const [showTestLoanModal, setShowTestLoanModal] = useState(false)
@@ -85,6 +93,7 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
   const [ttsDebug, setTtsDebug] = useState<{ text: string; engine: string } | null>(null)
   const [showTtsDebug, setShowTtsDebug] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const handleSendMessageRef = useRef<(message: string) => void>()
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -165,7 +174,7 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
           if (useElevenLabs && elevenLabsTTS.state.isConfigured) {
             elevenLabsTTS.actions.speak(summaryText)
           } else {
-            voiceChat.actions.speak(summaryText)
+            browserSpeak(summaryText)
           }
         }
       }
@@ -174,14 +183,27 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
     }
 
     setInput('')
-  }, [submitUserMessage, setMessages, isVoiceEnabled, useElevenLabs, elevenLabsTTS, voiceChat, showTtsDebug]);
+  }, [
+    submitUserMessage,
+    setMessages,
+    isVoiceEnabled,
+    useElevenLabs,
+    elevenLabsTTS,
+    browserSpeak,
+    showTtsDebug,
+  ])
+
+  // Store the latest handleSendMessage in ref to avoid dependency issues
+  handleSendMessageRef.current = handleSendMessage
 
   // Handle voice input completion
   useEffect(() => {
-    if (voiceChat.state.currentTranscript && !voiceChat.state.isListening) {
-      handleSendMessage(voiceChat.state.currentTranscript)
+    if (voiceState.currentTranscript && !voiceState.isListening) {
+      const transcript = voiceState.currentTranscript
+      handleSendMessageRef.current?.(transcript)
+      clearTranscript()
     }
-  }, [voiceChat.state.isListening, voiceChat.state.currentTranscript, handleSendMessage])
+  }, [voiceState.currentTranscript, voiceState.isListening, clearTranscript])
 
   // Safer, simpler extractor to avoid grabbing unrelated text
   const safeExtractTextFromResponse = (message: any): string => {
@@ -613,17 +635,17 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
   }
 
   const toggleVoiceInput = () => {
-    if (voiceChat.state.isListening) {
-      voiceChat.actions.stopListening()
+    if (voiceState.isListening) {
+      stopListening()
     } else {
-      voiceChat.actions.startListening()
+      startListening()
     }
   }
 
   const toggleVoiceOutput = () => {
     setIsVoiceEnabled(!isVoiceEnabled)
-    if (voiceChat.state.isSpeaking) {
-      voiceChat.actions.stopSpeaking()
+    if (voiceState.isSpeaking) {
+      stopSpeaking()
     }
   }
 
@@ -720,10 +742,10 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
             : 'border-gray-300 hover:border-blue-500'
         }`} />
 
-        {/* Theme Toggle */}
+        {/* Theme Toggle - Hidden */}
         <button
           onClick={onToggleTheme}
-          className={`p-2 border rounded-lg transition-colors ${
+          className={`hidden p-2 border rounded-lg transition-colors ${
             isDarkMode
               ? 'bg-gray-900/50 border-gray-800 hover:border-blue-500'
               : 'bg-gray-100 border-gray-300 hover:border-blue-500'
@@ -871,11 +893,11 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
 
         {/* Voice Status Area - Above Input */}
         <AnimatePresence>
-          {(voiceChat.state.isListening ||
+          {(voiceState.isListening ||
             elevenLabsTTS.state.isLoading ||
             elevenLabsTTS.state.isPlaying ||
-            voiceChat.state.isSpeaking ||
-            voiceChat.state.error) && (
+            voiceState.isSpeaking ||
+            voiceState.error) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -918,7 +940,7 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
                 )}
 
                 {/* Listening Status */}
-                {voiceChat.state.isListening && (
+                {voiceState.isListening && (
                   <div className="flex items-center justify-center gap-3 text-red-500">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -958,7 +980,7 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
                 )}
 
                 {/* Browser TTS Playing Status */}
-                {voiceChat.state.isSpeaking && !elevenLabsTTS.state.isPlaying && (
+                {voiceState.isSpeaking && !elevenLabsTTS.state.isPlaying && (
                   <div className="flex items-center justify-center gap-3 text-green-500">
                     <SpeakerphoneIcon className="h-4 w-4 animate-pulse" />
                     <div className="text-center">
@@ -969,11 +991,22 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
                 )}
 
                 {/* Error Status */}
-                {voiceChat.state.error && (
+                {voiceState.error && (
                   <div className="flex items-center justify-center gap-3 text-red-500">
                     <div className="text-center">
-                      <div className="font-medium">😅 Oops, voice hiccup!</div>
-                      <div className="text-xs opacity-75">No worries - you can still type your question below</div>
+                      <div className="font-medium">🎤 Voice Issue</div>
+                      <div className="text-xs opacity-75 max-w-md">{voiceState.error}</div>
+                      {voiceState.error.includes('denied') && (
+                        <button
+                          onClick={async () => {
+                            const hasPermission = await checkMicrophonePermission()
+                            console.log('Permission check result:', hasPermission)
+                          }}
+                          className="mt-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded"
+                        >
+                          Check Permissions
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -987,35 +1020,35 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
           <div className="flex items-center gap-2 max-w-4xl mx-auto">
             <input
               type="text"
-              value={voiceChat.state.isListening ? voiceChat.state.currentTranscript : input}
+              value={voiceState.isListening ? voiceState.currentTranscript : input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSendMessage(input)
                 }
               }}
-              placeholder={voiceChat.state.isListening ? "Listening..." : "Type or speak your message..."}
+              placeholder={voiceState.isListening ? "Listening..." : "Type or speak your message..."}
               className={`flex-1 p-3 rounded-lg border ${
                 isDarkMode
                   ? 'bg-gray-900 border-gray-800 text-white'
                   : 'bg-gray-50 border-gray-200 text-black'
               }`}
-              disabled={voiceChat.state.isListening}
+              disabled={voiceState.isListening}
             />
 
             {/* Voice Input Button */}
             <button
               onClick={toggleVoiceInput}
               className={`p-3 rounded-lg transition-all ${
-                voiceChat.state.isListening
+                voiceState.isListening
                   ? 'bg-red-500 animate-pulse text-white'
                   : isDarkMode
                     ? 'bg-gray-800 hover:bg-gray-700 text-white'
                     : 'bg-gray-200 hover:bg-gray-300 text-black'
               }`}
             >
-              {voiceChat.state.isListening ? (
+              {voiceState.isListening ? (
                 <StopIcon className="h-6 w-6" />
               ) : (
                 <MicrophoneIcon className="h-6 w-6" />
@@ -1023,7 +1056,7 @@ export function VoiceChat({ onNavigate, isDarkMode, onToggleTheme }: VoiceChatPr
             </button>
 
             {/* Send Button */}
-            {!voiceChat.state.isListening && input && (
+            {!voiceState.isListening && input && (
               <button
                 onClick={() => handleSendMessage(input)}
                 className={`p-3 rounded-lg transition-all ${

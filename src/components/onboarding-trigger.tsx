@@ -9,29 +9,32 @@ interface OnboardingTriggerProps {
 }
 
 export function OnboardingTrigger({ variant = 'banner', className = '' }: OnboardingTriggerProps) {
-  const {
-    onboardingState,
-    showOnboardingModal,
-    needsOnboarding,
-    isNewUser,
-    isDashboardRoute,
-    isAuthenticated
-  } = useOnboarding()
+  // Onboarding trigger disabled for now
+  return null
 
-  // Don't show if not on dashboard route or not authenticated
-  if (!isDashboardRoute || !isAuthenticated) return null
+  // const {
+  //   onboardingState,
+  //   showOnboardingModal,
+  //   needsOnboarding,
+  //   isNewUser,
+  //   isDashboardRoute,
+  //   isAuthenticated
+  // } = useOnboarding()
 
-  // Don't show if onboarding is complete
-  if (onboardingState.isComplete) return null
+  // // Don't show if not on dashboard route or not authenticated
+  // if (!isDashboardRoute || !isAuthenticated) return null
 
-  // Don't show if user doesn't need onboarding
-  if (!needsOnboarding && !isNewUser) return null
+  // // Don't show if onboarding is complete
+  // if (onboardingState.isComplete) return null
 
-  // Additional check: Don't show if user has explicitly completed onboarding
-  if (typeof window !== 'undefined') {
-    const hasCompletedOnboarding = localStorage.getItem(`user_onboarded`) === 'true'
-    if (hasCompletedOnboarding) return null
-  }
+  // // Don't show if user doesn't need onboarding
+  // if (!needsOnboarding && !isNewUser) return null
+
+  // // Additional check: Don't show if user has explicitly completed onboarding
+  // if (typeof window !== 'undefined') {
+  //   const hasCompletedOnboarding = localStorage.getItem(`user_onboarded`) === 'true'
+  //   if (hasCompletedOnboarding) return null
+  // }
 
   if (variant === 'banner') {
     return (

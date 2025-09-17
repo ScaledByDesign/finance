@@ -31,15 +31,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   return (
     <>
       {children}
-      {/* Only render onboarding wizard on dashboard routes for authenticated users */}
-      {isDashboardRoute && isAuthenticated && (
+      {/* Onboarding wizard disabled for now */}
+      {/* {isDashboardRoute && isAuthenticated && (
         <OnboardingWizard
           isOpen={showOnboarding}
           onClose={hideOnboarding}
           onComplete={handleOnboardingComplete}
           isDarkMode={isDarkMode}
         />
-      )}
+      )} */}
     </>
   )
 }
