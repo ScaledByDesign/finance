@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Background and Foreground */
+        --background: 0 0% 100%; /* White */
+        --foreground: 0 0% 0%; /* Black */
+        
+        /* Cards and Popovers */
+        --card: 0 0% 98%; /* Light Grey for Cards */
+        --card-foreground: 0 0% 20%; /* Dark Grey for Text */
+        --popover: 0 0% 97%; /* Slightly Off-White for Popovers */
+        --popover-foreground: 0 0% 15%; /* Darker Grey for Popover Text */
+
+        /* Primary and Secondary Colors */
+        --primary: 0 0% 20%; /* Black */
+        --primary-foreground: 0 0% 100%; /* White */
+        --secondary: 0 0% 90%; /* Very Light Grey */
+        --secondary-foreground: 0 0% 15%; /* Dark Grey for Text on Secondary */
+
+        /* Muted Colors */
+        --muted: 0 0% 95%; /* Soft Grey for Muted Elements */
+        --muted-foreground: 0 0% 30%; /* Grey for Muted Text */
+
+        /* Accent and Destructive Colors */
+        --accent: 0 0% 90%; /* Light Grey Accent */
+        --accent-foreground: 0 0% 10%; /* Almost Black */
+        --destructive: 0 72% 51%; /* Red for Destructive Actions */
+        --destructive-foreground: 0 0% 100%; /* White on Red */
+
+        /* Border, Input, and Ring */
+        --border: 0 0% 85%; /* Light Grey Border */
+        --input: 0 0% 92%; /* Light Grey for Input Background */
+        --ring: 0 0% 40%; /* Grey for Focus Ring */
+
+        --radius: 0.5rem; /* Border Radius */
+
+        /* Chart Colors */
+        --chart-1: 221.2 83.2% 53.3%;
+        --chart-2: 212 95% 68%;
+        --chart-3: 216 92% 60%;
+        --chart-4: 210 98% 78%;
+        --chart-5: 212 97% 87%;
+        --sidebar-background: 0 0% 98%;
+        --sidebar-foreground: 240 5.3% 26.1%;
+        --sidebar-primary: 240 5.9% 10%;
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 240 4.8% 95.9%;
+        --sidebar-accent-foreground: 240 5.9% 10%;
+        --sidebar-border: 220 13% 91%;
+        --sidebar-ring: 217.2 91.2% 59.8%;
+    }
+
+    .dark {
+        --background: 160 10% 3.9%;        /* Very Dark Emerald */
+        --foreground: 0 0% 98%;            /* Almost White */
+        --card: 160 10% 3.9%;              /* Very Dark Emerald */
+        --card-foreground: 0 0% 98%;       /* Almost White */
+        --popover: 160 10% 3.9%;           /* Very Dark Emerald */
+        --popover-foreground: 0 0% 98%;    /* Almost White */
+        --primary: 0 0% 100%;              /* Pure White */
+        --primary-foreground: 160 40% 8%; /* Light Emerald-White */
+        --text-primary: 150 100% 50%;      /* Bright Green */
+        --secondary: 160 40% 96.1%;        /* Very Light Emerald */
+        --secondary-foreground: 162 47.4% 11.2%; /* Dark Emerald */
+        --muted: 160 3.7% 15.9%;           /* Dark Gray-Emerald */
+        --muted-foreground: 160 5% 64.9%;  /* Medium Gray-Emerald */
+        --accent: 160 3.7% 15.9%;          /* Dark Gray-Emerald */
+        --accent-foreground: 0 0% 98%;     /* Almost White */
+        --destructive: 0 72% 51%;          /* Bright Red */
+        --destructive-foreground: 160 40% 98%; /* Light Emerald-White */
+        --border: 160 3.7% 15.9%;          /* Dark Gray-Emerald */
+        --input: 160 3.7% 15.9%;           /* Dark Gray-Emerald */
+        --ring: 161.2 83.2% 53.3%;         /* Bright Emerald */
+        --radius: 0.5rem;                  /* Border Radius */
+        --chart-1: 161.2 83.2% 53.3%;      /* Bright Emerald */
+        --chart-2: 162 95% 68%;            /* Light Emerald */
+        --chart-3: 163 92% 60%;            /* Medium Emerald */
+        --chart-4: 164 98% 78%;            /* Pale Emerald */
+        --chart-5: 165 97% 87%;            /* Very Pale Emerald */
+        --sidebar-background: 160 5.9% 10%;     /* Very Dark Emerald */
+        --sidebar-foreground: 160 4.8% 95.9%;   /* Very Light Emerald */
+        --sidebar-primary: 164.3 76.3% 48%;     /* Medium Emerald */
+        --sidebar-primary-foreground: 0 0% 100%; /* Pure White */
+        --sidebar-accent: 160 3.7% 15.9%;       /* Dark Gray-Emerald */
+        --sidebar-accent-foreground: 160 4.8% 95.9%; /* Very Light Emerald */
+        --sidebar-border: 160 3.7% 15.9%;       /* Dark Gray-Emerald */
+        --sidebar-ring: 162.2 91.2% 59.8%;      /* Bright Emerald */
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+.no-scrollbar {
+    scrollbar-width: "none";
+    -ms-overflow-style: "none";
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.tremor-BarList-bar > div {
+    overflow: hidden !important;
+    padding: 0 0.5rem;
+}
+
+.tremor-BarList-root {
+    width: calc(100vw - 12rem);
+}
+
+#headlessui-portal-root .tremor-BarList-root {
+    width: calc(100vw - 10rem);
+}
+
+.break-word {
+    word-break: break-word;
+}
+
+.multiselect > button {
+    overflow: hidden !important;
+}
+
+.go2072408551 {
+    max-width: 450px !important;
+}
+
+.grid-cols-52 {
+    grid-template-columns: repeat(52, minmax(0, 1fr));
+}
+
+.grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}

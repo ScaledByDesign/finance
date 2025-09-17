@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /v2/
+Allow: /manifest.json
+Allow: /icons/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+Sitemap: https://yourdomain.com/sitemap.xml

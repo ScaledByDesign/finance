@@ -1,0 +1,149 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: financeuser
+      POSTGRES_PASSWORD: financepass123
+      POSTGRES_DB: financedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U financeuser -d financedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: finance-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Weaviate vector database for Elysia
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.26.1
+    container_name: finance-weaviate
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: 'text2vec-openai,text2vec-cohere,text2vec-huggingface,ref2vec-centroid,generative-openai,qna-openai'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  localstripe:
+    image: adrienverge/localstripe:latest
+    platform: linux/amd64
+    container_name: finance-localstripe
+    restart: unless-stopped
+    ports:
+      - "8420:8420"
+    volumes:
+      - stripe_data:/data
+    environment:
+      - STRIPE_SECRET_KEY=sk_test_localstripe_secret_key
+      - STRIPE_PUBLISHABLE_KEY=pk_test_localstripe_publishable_key
+
+  # Elysia AI Agent Backend
+  elysia:
+    build:
+      context: ./elysia
+      dockerfile: Dockerfile
+    container_name: finance-elysia
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Model Configuration
+      - BASE_MODEL=gpt-4o-mini
+      - BASE_PROVIDER=openai
+      - COMPLEX_MODEL=gpt-4o
+      - COMPLEX_PROVIDER=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Weaviate Configuration (Local)
+      - WEAVIATE_IS_LOCAL=true
+      - WCD_URL=http://weaviate:8080
+      - LOCAL_WEAVIATE_PORT=8080
+      - LOCAL_WEAVIATE_GRPC_PORT=50051
+
+      # Optional: OpenRouter for model variety
+      # - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    volumes:
+      - ./elysia:/app
+      - elysia_data:/app/data
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: finance-app
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://financeuser:financepass123@postgres:5432/financedb
+      - POSTGRES_PRISMA_URL=postgresql://financeuser:financepass123@postgres:5432/financedb?schema=public
+      - REDIS_URL=redis://redis:6379
+      # Elysia Integration
+      - ELYSIA_API_URL=http://elysia:8000
+      - WEAVIATE_URL=http://weaviate:8080
+    env_file:
+      - .env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstripe:
+        condition: service_started
+      elysia:
+        condition: service_healthy
+      weaviate:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./prisma:/app/prisma
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
+  redis_data:
+  stripe_data:
+  weaviate_data:
+  elysia_data:

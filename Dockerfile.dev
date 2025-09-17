@@ -1,0 +1,31 @@
+FROM node:20-slim
+
+# Install dependencies including OpenSSL for Prisma and PostgreSQL client
+RUN apt-get update -y && apt-get install -y openssl postgresql-client && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN npm ci
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Copy application files
+COPY . .
+
+# Copy and set entrypoint
+COPY scripts/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Expose port
+EXPOSE 3000
+
+# Use entrypoint for migrations
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Start development server
+CMD ["npm", "run", "dev"]

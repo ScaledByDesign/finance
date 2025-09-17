@@ -1,0 +1,32 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="76.8" fill="url(#grad512)"/>
+  
+  <!-- Dollar sign -->
+  <text x="256" y="324.26666666666665" 
+        font-family="Arial, sans-serif" 
+        font-size="204.8" 
+        font-weight="bold" 
+        fill="white" 
+        text-anchor="middle">$</text>
+  
+  <!-- Chart bars -->
+  <g transform="translate(76.8, 409.6)">
+    <rect x="0" y="-51.2" width="15.36" height="51.2" fill="white" opacity="0.8" rx="2"/>
+    <rect x="25.6" y="-76.8" width="15.36" height="76.8" fill="white" opacity="0.8" rx="2"/>
+    <rect x="51.2" y="-102.4" width="15.36" height="102.4" fill="white" opacity="0.8" rx="2"/>
+    <rect x="76.80000000000001" y="-61.44" width="15.36" height="61.44" fill="white" opacity="0.8" rx="2"/>
+  </g>
+  
+  <!-- Coins decoration -->
+  <circle cx="409.6" cy="128" r="20.48" fill="white" opacity="0.9"/>
+  <circle cx="435.2" cy="102.4" r="15.36" fill="white" opacity="0.7"/>
+  <circle cx="460.8" cy="153.6" r="12.8" fill="white" opacity="0.5"/>
+</svg>

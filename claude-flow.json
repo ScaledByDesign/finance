@@ -1,0 +1,279 @@
+{
+  "name": "Finance Application Flow",
+  "description": "Claude flow configuration for the Finance personal finance dashboard application",
+  "version": "1.0.0",
+  "flows": {
+    "development": {
+      "name": "Development Workflow",
+      "description": "Standard development workflow for the Finance application",
+      "steps": [
+        {
+          "id": "setup",
+          "name": "Environment Setup",
+          "description": "Set up development environment and dependencies",
+          "commands": [
+            "npm install",
+            "npx prisma generate",
+            "cp .env.example .env"
+          ],
+          "notes": "Ensure all environment variables are configured properly"
+        },
+        {
+          "id": "database",
+          "name": "Database Setup",
+          "description": "Initialize and migrate database",
+          "commands": [
+            "docker-compose up -d postgres redis",
+            "npx prisma migrate dev",
+            "npx prisma db seed"
+          ],
+          "dependencies": ["setup"]
+        },
+        {
+          "id": "dev-server",
+          "name": "Start Development Server",
+          "description": "Run the development server",
+          "commands": [
+            "npm run dev"
+          ],
+          "dependencies": ["database"],
+          "notes": "Server will be available at http://localhost:3000"
+        }
+      ]
+    },
+    "docker-deployment": {
+      "name": "Docker Deployment",
+      "description": "Deploy the application using Docker Compose",
+      "steps": [
+        {
+          "id": "docker-build",
+          "name": "Build Docker Images",
+          "description": "Build all required Docker images",
+          "commands": [
+            "docker-compose build"
+          ]
+        },
+        {
+          "id": "docker-deploy",
+          "name": "Deploy Services",
+          "description": "Start all services with Docker Compose",
+          "commands": [
+            "docker-compose up -d"
+          ],
+          "dependencies": ["docker-build"],
+          "notes": "Application will be available at http://localhost:3002"
+        },
+        {
+          "id": "docker-logs",
+          "name": "Monitor Logs",
+          "description": "Monitor application logs",
+          "commands": [
+            "docker-compose logs -f app"
+          ],
+          "dependencies": ["docker-deploy"]
+        }
+      ]
+    },
+    "testing": {
+      "name": "Testing Workflow",
+      "description": "Run tests and quality checks",
+      "steps": [
+        {
+          "id": "lint",
+          "name": "Code Linting",
+          "description": "Run ESLint to check code quality",
+          "commands": [
+            "npm run lint"
+          ]
+        },
+        {
+          "id": "type-check",
+          "name": "TypeScript Check",
+          "description": "Verify TypeScript types",
+          "commands": [
+            "npx tsc --noEmit"
+          ]
+        },
+        {
+          "id": "build-test",
+          "name": "Build Test",
+          "description": "Test production build",
+          "commands": [
+            "npm run build"
+          ],
+          "dependencies": ["lint", "type-check"]
+        }
+      ]
+    },
+    "demo-mode": {
+      "name": "Demo Mode Setup",
+      "description": "Configure and run the application in demo mode",
+      "steps": [
+        {
+          "id": "demo-config",
+          "name": "Configure Demo Mode",
+          "description": "Set environment variables for demo mode",
+          "commands": [
+            "echo 'NEXT_PUBLIC_DEMO_MODE=true' >> .env"
+          ],
+          "notes": "Demo mode uses mock data instead of real Plaid connections"
+        },
+        {
+          "id": "demo-run",
+          "name": "Run Demo",
+          "description": "Start application in demo mode",
+          "commands": [
+            "npm run dev"
+          ],
+          "dependencies": ["demo-config"],
+          "notes": "Demo data includes sample accounts, transactions, and analytics"
+        }
+      ]
+    },
+    "feature-development": {
+      "name": "Feature Development",
+      "description": "Workflow for developing new features",
+      "steps": [
+        {
+          "id": "feature-branch",
+          "name": "Create Feature Branch",
+          "description": "Create a new branch for feature development",
+          "commands": [
+            "git checkout -b feature/new-feature-name"
+          ]
+        },
+        {
+          "id": "implement",
+          "name": "Implement Feature",
+          "description": "Develop the new feature",
+          "notes": "Follow the existing code patterns and component structure"
+        },
+        {
+          "id": "test-feature",
+          "name": "Test Feature",
+          "description": "Test the new feature thoroughly",
+          "commands": [
+            "npm run lint",
+            "npm run build",
+            "npm run dev"
+          ],
+          "dependencies": ["implement"]
+        },
+        {
+          "id": "commit",
+          "name": "Commit Changes",
+          "description": "Commit the feature changes",
+          "commands": [
+            "git add .",
+            "git commit -m 'feat: add new feature description'"
+          ],
+          "dependencies": ["test-feature"]
+        }
+      ]
+    },
+    "data-analysis": {
+      "name": "Data Analysis Workflow",
+      "description": "Workflow for analyzing financial data and generating insights",
+      "steps": [
+        {
+          "id": "data-review",
+          "name": "Review Data Structure",
+          "description": "Analyze current data structure and requirements",
+          "notes": "Check demo data format, component expectations, and API responses"
+        },
+        {
+          "id": "chart-validation",
+          "name": "Validate Chart Data",
+          "description": "Ensure all chart components receive properly formatted data",
+          "notes": "Verify githubGraph, chartData, barListData, and other chart data formats"
+        },
+        {
+          "id": "demo-data-update",
+          "name": "Update Demo Data",
+          "description": "Update demo data to match component requirements",
+          "notes": "Ensure demo data includes all required fields for charts and analytics"
+        }
+      ]
+    }
+  },
+  "environments": {
+    "development": {
+      "url": "http://localhost:3000",
+      "database": "postgresql://financeuser:financepass123@localhost:5432/financedb",
+      "demo_mode": true
+    },
+    "docker": {
+      "url": "http://localhost:3002",
+      "database": "postgresql://financeuser:financepass123@postgres:5432/financedb",
+      "demo_mode": true
+    },
+    "production": {
+      "url": "https://your-domain.com",
+      "database": "production_database_url",
+      "demo_mode": false
+    }
+  },
+  "components": {
+    "frontend": {
+      "framework": "Next.js 14",
+      "ui_library": "shadcn/ui",
+      "styling": "Tailwind CSS",
+      "charts": "Recharts, Tremor",
+      "state_management": "Redux Toolkit"
+    },
+    "backend": {
+      "api": "Next.js API Routes",
+      "database": "PostgreSQL with Prisma",
+      "authentication": "NextAuth.js",
+      "external_apis": ["Plaid", "OpenAI"]
+    },
+    "infrastructure": {
+      "containerization": "Docker",
+      "orchestration": "Docker Compose",
+      "caching": "Redis",
+      "payments": "Stripe (LocalStripe for development)"
+    }
+  },
+  "key_features": {
+    "financial_data": {
+      "description": "Connect and aggregate financial accounts via Plaid",
+      "demo_support": true
+    },
+    "ai_insights": {
+      "description": "AI-powered financial analysis using OpenAI",
+      "demo_support": true
+    },
+    "dashboard": {
+      "description": "Comprehensive financial dashboard with KPIs and charts",
+      "demo_support": true
+    },
+    "transaction_analysis": {
+      "description": "Detailed transaction categorization and analysis",
+      "demo_support": true
+    },
+    "chat_interface": {
+      "description": "Conversational AI for financial Q&A",
+      "demo_support": true
+    }
+  },
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Demo mode not working",
+        "solution": "Ensure NEXT_PUBLIC_DEMO_MODE=true in environment variables"
+      },
+      {
+        "issue": "Charts not displaying data",
+        "solution": "Check that demo data includes all required chart data fields"
+      },
+      {
+        "issue": "Database connection errors",
+        "solution": "Verify PostgreSQL is running and connection string is correct"
+      },
+      {
+        "issue": "Docker services not starting",
+        "solution": "Check Docker daemon is running and ports are available"
+      }
+    ]
+  }
+}

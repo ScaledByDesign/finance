@@ -1,0 +1,194 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+// User model
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  phone          String?
+  family_name    String?
+  given_name     String?
+  image          String?
+  locale         String   @default("en")
+  country        String?
+  state          String?
+  city           String?
+  salary         Float?
+  payday         Int?
+  twilioToken    String?
+  ACCESS_TOKEN   String?
+  ITEM_ID        String?
+  TRANSFER_ID    String?
+  storeAYear     Boolean  @default(true)
+  kpis           Json[]
+  kpis_prev      Json[]
+  isPro          Boolean  @default(false)
+  subscription   String?
+  demoModePreference Boolean?
+  createdAt      DateTime @default(now())
+  transactions   Transaction[]
+  items          Item[]
+  chats          Chat[]
+}
+
+// Transaction model
+model Transaction {
+  id                      String   @id @default(uuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id])
+  name                    String?
+  amount                  Float
+  account_id              String
+  date                    DateTime
+  iso_currency_code       String?
+  unofficial_currency_code String?
+  category                String[]
+  payment_channel         String?
+  category_id             String?
+  check_number            String?
+  datetime                DateTime?
+  authorized_date         DateTime?
+  authorized_datetime     DateTime?
+  location                Location?
+  merchant_name           String?
+  payment_meta            PaymentMeta?
+  pending                 Boolean?
+  pending_transaction_id  String?
+  personal_finance_category PersonalFinanceCategory?
+  transaction_id          String?
+  transaction_code        String?
+  transaction_type        String?
+  cancel_transaction_id   String?
+  fees                    Float?
+  investment_transaction_id String?
+  price                   Float?
+  quantity                Float?
+  security_id             String?
+  subtype                 String?
+  type                    String?
+}
+
+// Item model
+model Item {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  institutionId String
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  accounts    Account[]
+  cursor      String?
+  ACCESS_TOKEN String?
+  ITEM_ID     String?
+  TRANSFER_ID String?
+  endDate     String?
+  products    String[]
+}
+
+// Chat model
+model Chat {
+  id        String   @id @default(uuid())
+  chatId    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  messages  String?
+  path      String?
+  createdAt DateTime?
+}
+
+// Category model
+model Category {
+  id        String   @id @default(uuid())
+  category_id String
+  group      String
+  hierarchy  String[]
+}
+
+// Location model
+model Location {
+  id          String   @id @default(uuid())
+  address     String?
+  city        String?
+  region      String?
+  postal_code String?
+  country     String?
+  lat         Float?
+  lon         Float?
+  store_number String?
+  transactionId String @unique
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+// PaymentMeta model
+model PaymentMeta {
+  id                String   @id @default(uuid())
+  by_order_of       String?
+  payee             String?
+  payer             String?
+  payment_method    String?
+  payment_processor String?
+  ppd_id            String?
+  reason            String?
+  reference_number  String?
+  transactionId String @unique
+  transaction       Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+// PersonalFinanceCategory model
+model PersonalFinanceCategory {
+  id        String   @id @default(uuid())
+  primary   String?
+  detailed  String?
+  transactionId String @unique
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+// Institution model
+model Institution {
+  id              String   @id @default(uuid())
+  institution_id  String?
+  name            String?
+  itemId          String?
+  items           Item[]
+}
+
+// Account model
+model Account {
+  id                      String   @id @default(uuid())
+  itemId                  String
+  item                    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  account_id              String   @unique
+  balances                Balances?
+  mask                    String?
+  name                    String?
+  official_name           String?
+  subtype                 String?
+  type                    String?
+  persistent_account_id   String?
+}
+
+// Balances model
+model Balances {
+  id                      String   @id @default(uuid())
+  available               Float?
+  current                 Float?
+  last_updated_datetime   DateTime?
+  iso_currency_code       String?
+  limit                   Float?
+  unofficial_currency_code String?
+  accountId               String @unique
+  account                 Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
