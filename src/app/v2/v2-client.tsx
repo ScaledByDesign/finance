@@ -71,6 +71,7 @@ export function V2Client({ chatId }: V2ClientProps) {
             key="dashboard"
             onBack={handleBack}
             isDarkMode={isDarkMode}
+            onToggleTheme={toggleTheme}
           />
         )}
         {currentScreen === 'transactions' && (
